@@ -355,6 +355,12 @@ function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
 
 function getEmbeddedVideos(container, options = {}) {
 	const startTime = Date.now();
+	
+	// Force debug test - this should always show
+	console.log('🧪 FORCED DEBUG TEST - getEmbeddedVideos called');
+	console.log('🧪 Container type:', container.tagName || 'unknown');
+	console.log('🧪 Options:', options);
+	
 	debugInfo('Starting video processing...');
 	debugDebug('getEmbeddedVideos called with options:', options);
 
@@ -488,58 +494,47 @@ function createLink(clickAction, text, color = "lightskyblue") {
 	return link
 }
 
-// Debug logging utilities
-let debugEnabled = null; // Cache debug state to avoid repeated storage calls
-let debugInitialized = false;
+// Debug logging utilities - SIMPLIFIED for reliability
+let debugEnabled = false; // Start with false, will be updated
 
-function refreshDebugState() {
-	if (debugInitialized) return; // Avoid multiple initialization
-
-	try {
-		// Use synchronous approach to avoid timing issues
-		chrome.storage.sync.get(['trilium_video_debug_mode']).then(result => {
-			debugEnabled = result.trilium_video_debug_mode === true;
-			debugInitialized = true;
-			console.log('Debug state initialized:', debugEnabled);
-		}).catch(error => {
-			console.warn('Failed to get debug state from storage:', error);
-			debugEnabled = false;
-			debugInitialized = true;
-		});
-	} catch (error) {
-		console.warn('Chrome storage not available, debug disabled:', error);
-		debugEnabled = false;
-		debugInitialized = true;
-	}
-}
-
+// Simple, reliable debug logging
 function debugLog(level = 'INFO', ...args) {
-	// Fallback: if storage fails, check for URL parameter
-	if (debugEnabled === null && !debugInitialized) {
-		const urlDebug = window.location.search.includes('debug=true');
-		if (urlDebug) {
-			debugEnabled = true;
-			console.log('Debug enabled via URL parameter');
-		} else {
-			refreshDebugState();
-			// For immediate logging, assume enabled if we can't check storage yet
-			debugEnabled = true;
+	// Always try to get fresh debug state for now
+	if (typeof chrome !== 'undefined' && chrome.storage) {
+		chrome.storage.sync.get(['trilium_video_debug_mode']).then(result => {
+			if (result.trilium_video_debug_mode === true) {
+				const timestamp = new Date().toISOString().substr(11, 12);
+				const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
+				const icon = icons[level] || '📹';
+				console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
+			}
+		}).catch(() => {
+			// If storage fails, check URL parameter
+			if (window.location.search.includes('debug=true')) {
+				const timestamp = new Date().toISOString().substr(11, 12);
+				const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
+				const icon = icons[level] || '📹';
+				console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
+			}
+		});
+	} else {
+		// Fallback: check URL parameter when chrome APIs not available
+		if (window.location.search.includes('debug=true')) {
+			const timestamp = new Date().toISOString().substr(11, 12);
+			const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
+			const icon = icons[level] || '📹';
+			console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
 		}
 	}
-
-	if (debugEnabled) {
-		const timestamp = new Date().toISOString().substr(11, 12);
-		const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
-		const icon = icons[level] || '📹';
-		console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
-	}
 }
 
-// Convenience functions (now synchronous)
+// Convenience functions
 function debugError(...args) { debugLog('ERROR', ...args); }
 function debugWarn(...args) { debugLog('WARN', ...args); }
 function debugInfo(...args) { debugLog('INFO', ...args); }
-function debugDebug(...args) { debugLog('DEBUG', ...args); }async function getUserVideoPreferences() {
+function debugDebug(...args) { debugLog('DEBUG', ...args); }
+
+async function getUserVideoPreferences() {
 	try {
 		const result = await chrome.storage.sync.get([
 			'trilium_video_processing_mode',
@@ -549,7 +544,9 @@ function debugDebug(...args) { debugLog('DEBUG', ...args); }async function getUs
 
 		const mode = result.trilium_video_processing_mode || 'HYBRID';
 		const privacyMode = result.trilium_video_privacy_mode !== false; // Default true
-		const debugMode = result.trilium_video_debug_mode === true; // Default false		// Map mode to options
+		const debugMode = result.trilium_video_debug_mode === true; // Default false
+		
+		// Map mode to options
 		const modeOptions = {
 			'EMBED_ONLY': {
 				preserveIframes: false,
@@ -595,11 +592,12 @@ function debugDebug(...args) { debugLog('DEBUG', ...args); }async function getUs
 
 async function prepareMessageResponse(message) {
 	console.info('Message: ' + message.name);
-
+	
+	// Force debug test - this should always show
+	console.log('🧪 FORCED DEBUG TEST - Message received:', message.name);
+	
 	// Test debug functionality on every message
-	debugInfo(`Processing message: ${message.name}`);
-
-	if (message.name === "ping") {
+	debugInfo(`Processing message: ${message.name}`);	if (message.name === "ping") {
 		return { success: true };
 	}
 	else if (message.name === "toast") {
@@ -793,7 +791,11 @@ async function requireLib(libPath) {
 	}
 }
 
-// Initialize debug state when content script loads
-if (typeof chrome !== 'undefined' && chrome.storage) {
-	refreshDebugState();
-}
+// Initialize and test debug system when content script loads
+console.log('🧪 TRILIUM CONTENT SCRIPT LOADED');
+console.log('🧪 Chrome APIs available:', typeof chrome !== 'undefined');
+console.log('🧪 Location:', window.location.href);
+
+// Test debug immediately
+debugInfo('Content script loaded successfully');
+console.log('🧪 Debug test completed');
