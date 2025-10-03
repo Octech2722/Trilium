@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Video Debug Test</title>
+</head>
+<body>
+    <h1>Video Debug Test</h1>
+    
+    <p>This is a minimal test page with a simple YouTube iframe to test debug functionality.</p>
+    
+    <!-- Simple YouTube iframe -->
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+    
+    <p>Video link: <a href="https://www.youtube.com/watch?v=jNQXAC9IVRw">Test YouTube Video</a></p>
+    
+    <script>
+        console.log('=== TEST PAGE DEBUG ===');
+        console.log('Page loaded successfully');
+        console.log('Iframes found:', document.getElementsByTagName('iframe').length);
+        console.log('Links found:', document.getElementsByTagName('a').length);
+        
+        // Test if we can access chrome APIs
+        if (typeof chrome !== 'undefined') {
+            console.log('Chrome APIs available');
+        } else {
+            console.log('Chrome APIs NOT available');
+        }
+    </script>
+</body>
+</html>

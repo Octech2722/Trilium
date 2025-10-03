@@ -291,11 +291,12 @@ function extractVideoId(url, platform) {
 }
 
 function detectVideoPlatform(url) {
-	debugDebug('detectVideoPlatform called with URL:', url);
-	if (!url) {
-		debugDebug('No URL provided');
-		return null;
-	}
+	try {
+		debugDebug('detectVideoPlatform called with URL:', url);
+		if (!url) {
+			debugDebug('No URL provided');
+			return null;
+		}
 
 	if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube-nocookie.com')) {
 		debugInfo('Detected YouTube platform for:', url);
@@ -316,6 +317,10 @@ function detectVideoPlatform(url) {
 
 	debugDebug('No video platform detected for:', url);
 	return null;
+	} catch (error) {
+		console.error('Error in detectVideoPlatform:', error);
+		return null;
+	}
 }
 
 function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
@@ -485,19 +490,41 @@ function createLink(clickAction, text, color = "lightskyblue") {
 
 // Debug logging utilities
 let debugEnabled = null; // Cache debug state to avoid repeated storage calls
+let debugInitialized = false;
 
-async function refreshDebugState() {
+function refreshDebugState() {
+	if (debugInitialized) return; // Avoid multiple initialization
+
 	try {
-		const result = await chrome.storage.sync.get(['trilium_video_debug_mode']);
-		debugEnabled = result.trilium_video_debug_mode === true;
+		// Use synchronous approach to avoid timing issues
+		chrome.storage.sync.get(['trilium_video_debug_mode']).then(result => {
+			debugEnabled = result.trilium_video_debug_mode === true;
+			debugInitialized = true;
+			console.log('Debug state initialized:', debugEnabled);
+		}).catch(error => {
+			console.warn('Failed to get debug state from storage:', error);
+			debugEnabled = false;
+			debugInitialized = true;
+		});
 	} catch (error) {
+		console.warn('Chrome storage not available, debug disabled:', error);
 		debugEnabled = false;
+		debugInitialized = true;
 	}
 }
 
-async function debugLog(level = 'INFO', ...args) {
-	if (debugEnabled === null) {
-		await refreshDebugState();
+function debugLog(level = 'INFO', ...args) {
+	// Fallback: if storage fails, check for URL parameter
+	if (debugEnabled === null && !debugInitialized) {
+		const urlDebug = window.location.search.includes('debug=true');
+		if (urlDebug) {
+			debugEnabled = true;
+			console.log('Debug enabled via URL parameter');
+		} else {
+			refreshDebugState();
+			// For immediate logging, assume enabled if we can't check storage yet
+			debugEnabled = true;
+		}
 	}
 
 	if (debugEnabled) {
@@ -508,13 +535,11 @@ async function debugLog(level = 'INFO', ...args) {
 	}
 }
 
-// Convenience functions
-async function debugError(...args) { await debugLog('ERROR', ...args); }
-async function debugWarn(...args) { await debugLog('WARN', ...args); }
-async function debugInfo(...args) { await debugLog('INFO', ...args); }
-async function debugDebug(...args) { await debugLog('DEBUG', ...args); }
-
-async function getUserVideoPreferences() {
+// Convenience functions (now synchronous)
+function debugError(...args) { debugLog('ERROR', ...args); }
+function debugWarn(...args) { debugLog('WARN', ...args); }
+function debugInfo(...args) { debugLog('INFO', ...args); }
+function debugDebug(...args) { debugLog('DEBUG', ...args); }async function getUserVideoPreferences() {
 	try {
 		const result = await chrome.storage.sync.get([
 			'trilium_video_processing_mode',
@@ -570,6 +595,9 @@ async function getUserVideoPreferences() {
 
 async function prepareMessageResponse(message) {
 	console.info('Message: ' + message.name);
+
+	// Test debug functionality on every message
+	debugInfo(`Processing message: ${message.name}`);
 
 	if (message.name === "ping") {
 		return { success: true };
@@ -645,8 +673,11 @@ async function prepareMessageResponse(message) {
 		return { success: true }; // Return a response
 	}
 	else if (message.name === "trilium-save-selection") {
+		// Initialize debug state early
+		if (debugEnabled === null) {
+			refreshDebugState();
+		}
 		debugInfo('=== Starting selection clipping process ===');
-		await refreshDebugState(); // Refresh debug state for this operation
 
 		const container = document.createElement('div');
 
@@ -682,8 +713,11 @@ async function prepareMessageResponse(message) {
 		return getRectangleArea();
 	}
 	else if (message.name === "trilium-save-page") {
+		// Initialize debug state early
+		if (debugEnabled === null) {
+			refreshDebugState();
+		}
 		debugInfo('=== Starting page clipping process ===');
-		await refreshDebugState(); // Refresh debug state for this operation
 
 		await requireLib("/lib/JSDOMParser.js");
 		await requireLib("/lib/Readability.js");
@@ -735,7 +769,17 @@ async function prepareMessageResponse(message) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    prepareMessageResponse(message).then(sendResponse);
+    // Handle async operations properly
+    (async () => {
+        try {
+            const response = await prepareMessageResponse(message);
+            sendResponse(response);
+        } catch (error) {
+            console.error('Error in message handler:', error);
+            sendResponse({ error: error.message });
+        }
+    })();
+
     return true; // Important: indicates async response
 });
 
@@ -747,4 +791,9 @@ async function requireLib(libPath) {
 
 		await chrome.runtime.sendMessage({name: 'load-script', file: libPath});
 	}
+}
+
+// Initialize debug state when content script loads
+if (typeof chrome !== 'undefined' && chrome.storage) {
+	refreshDebugState();
 }
