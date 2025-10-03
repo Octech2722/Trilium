@@ -291,20 +291,30 @@ function extractVideoId(url, platform) {
 }
 
 function detectVideoPlatform(url) {
-	if (!url) return null;
+	console.log('[VIDEO DEBUG] detectVideoPlatform called with URL:', url);
+	if (!url) {
+		console.log('[VIDEO DEBUG] No URL provided');
+		return null;
+	}
 
 	if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube-nocookie.com')) {
+		console.log('[VIDEO DEBUG] Detected YouTube platform');
 		return 'youtube';
 	} else if (url.includes('vimeo.com')) {
+		console.log('[VIDEO DEBUG] Detected Vimeo platform');
 		return 'vimeo';
 	} else if (url.includes('dailymotion.com')) {
+		console.log('[VIDEO DEBUG] Detected DailyMotion platform');
 		return 'dailymotion';
 	} else if (url.includes('twitch.tv')) {
+		console.log('[VIDEO DEBUG] Detected Twitch platform');
 		return 'twitch';
 	} else if (url.includes('archive.org') || url.includes('upload.wikimedia.org')) {
+		console.log('[VIDEO DEBUG] Detected Archive platform');
 		return 'archive';
 	}
 
+	console.log('[VIDEO DEBUG] No video platform detected');
 	return null;
 }
 
@@ -339,6 +349,7 @@ function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
 }
 
 function getEmbeddedVideos(container, options = {}) {
+	console.log('[VIDEO DEBUG] getEmbeddedVideos called with options:', options);
 	const videos = [];
 	const videoData = [];
 
@@ -349,15 +360,21 @@ function getEmbeddedVideos(container, options = {}) {
 		addVideoLinks: options.addVideoLinks !== false, // Default true
 		...options
 	};
+	console.log('[VIDEO DEBUG] Final settings:', settings);
 
 	// Find all iframes and extract video information
 	const iframes = container.getElementsByTagName('iframe');
+	console.log('[VIDEO DEBUG] Found', iframes.length, 'iframes in container');
 
 	for (let i = iframes.length - 1; i >= 0; i--) {
 		const iframe = iframes[i];
 		const src = iframe.src;
+		console.log('[VIDEO DEBUG] Processing iframe', i, 'with src:', src);
 
-		if (!src) continue;
+		if (!src) {
+			console.log('[VIDEO DEBUG] Iframe has no src, skipping');
+			continue;
+		}
 
 		const platform = detectVideoPlatform(src);
 
@@ -397,14 +414,21 @@ function getEmbeddedVideos(container, options = {}) {
 
 	// Also look for video links in regular anchor tags
 	const links = container.getElementsByTagName('a');
+	console.log('[VIDEO DEBUG] Found', links.length, 'links in container');
 
 	for (const link of links) {
-		if (!link.href) continue;
+		console.log('[VIDEO DEBUG] Processing link with href:', link.href);
+		if (!link.href) {
+			console.log('[VIDEO DEBUG] Link has no href, skipping');
+			continue;
+		}
 
 		const platform = detectVideoPlatform(link.href);
 
 		if (platform) {
+			console.log('[VIDEO DEBUG] Link detected as', platform, 'platform');
 			const videoId = extractVideoId(link.href, platform);
+			console.log('[VIDEO DEBUG] Extracted video ID:', videoId);
 
 			if (videoId && settings.addVideoLinks) {
 				const existingVideo = videoData.find(v => v.videoId === videoId && v.platform === platform);
@@ -429,6 +453,7 @@ function getEmbeddedVideos(container, options = {}) {
 		}
 	}
 
+	console.log('[VIDEO DEBUG] Returning', videoData.length, 'processed videos:', videoData);
 	return videoData;
 }
 
@@ -603,11 +628,13 @@ async function prepareMessageResponse(message) {
 		return getRectangleArea();
 	}
 	else if (message.name === "trilium-save-page") {
+		console.log('[VIDEO DEBUG] trilium-save-page message received');
 		await requireLib("/lib/JSDOMParser.js");
 		await requireLib("/lib/Readability.js");
 		await requireLib("/lib/Readability-readerable.js");
 
 		const {title, body} = getReadableDocument();
+		console.log('[VIDEO DEBUG] Got readable document, body has', body.children.length, 'children');
 
 		makeLinksAbsolute(body);
 
@@ -615,9 +642,11 @@ async function prepareMessageResponse(message) {
 
 		// Get user video preferences
 		const videoPrefs = await getUserVideoPreferences();
+		console.log('[VIDEO DEBUG] Got video preferences:', videoPrefs);
 
 		// Process embedded videos with user preferences
 		const videos = getEmbeddedVideos(body, videoPrefs);
+		console.log('[VIDEO DEBUG] Processed videos result:', videos);
 
         var labels = {};
 		const dates = getDocumentDates();

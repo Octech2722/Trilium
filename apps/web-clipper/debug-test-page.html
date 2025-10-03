@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hackaday-style Test Page</title>
+</head>
+<body>
+    <h1>Test Article: Arduino Project</h1>
+    
+    <p>This is a test article similar to what you might find on Hackaday.com with embedded YouTube content.</p>
+    
+    <!-- Test Case 1: Direct YouTube iframe embed -->
+    <div class="video-wrapper">
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+    </div>
+    
+    <p>Here's some content between videos.</p>
+    
+    <!-- Test Case 2: YouTube link in text -->
+    <p>Check out this tutorial: <a href="https://www.youtube.com/watch?v=jNQXAC9IVRw">Arduino Basics Tutorial</a></p>
+    
+    <!-- Test Case 3: Short YouTube link -->
+    <p>Another great resource: <a href="https://youtu.be/dQw4w9WgXcQ">Project Showcase</a></p>
+    
+    <!-- Test Case 4: Embedded content that might be similar to Hackaday -->
+    <div class="wp-block-embed__wrapper">
+        <iframe src="https://www.youtube.com/embed/example123" width="500" height="281" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+    </div>
+    
+    <p>More article content here...</p>
+    
+    <script>
+        // Add some debug logging to see what elements exist
+        console.log('=== PAGE DEBUG INFO ===');
+        console.log('Total iframes:', document.getElementsByTagName('iframe').length);
+        console.log('Total links:', document.getElementsByTagName('a').length);
+        
+        // Log all iframes
+        const iframes = document.getElementsByTagName('iframe');
+        for (let i = 0; i < iframes.length; i++) {
+            console.log('Iframe', i, '- src:', iframes[i].src);
+        }
+        
+        // Log all links
+        const links = document.getElementsByTagName('a');
+        for (let i = 0; i < links.length; i++) {
+            console.log('Link', i, '- href:', links[i].href, '- text:', links[i].textContent);
+        }
+    </script>
+</body>
+</html>
