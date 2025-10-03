@@ -25,6 +25,32 @@
   <button class="button full needs-connection" id="save-whole-page-button">Save whole page</button>
   <button class="button full needs-connection" id="save-link-with-note-button">Save link with a note</button>
   <button class="button full needs-connection" id="save-tabs-button">Save window's tabs as a list</button>
+  
+  <div id="video-settings" style="margin-top: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9;">
+    <h4 style="margin: 0 0 8px 0; font-size: 12px;">📹 Video Handling</h4>
+    <div style="font-size: 11px;">
+      <label style="display: block; margin-bottom: 4px;">
+        <input type="radio" name="video-mode" value="HYBRID" checked> 
+        Embed videos with fallback links
+      </label>
+      <label style="display: block; margin-bottom: 4px;">
+        <input type="radio" name="video-mode" value="EMBED_ONLY"> 
+        Embed videos only
+      </label>
+      <label style="display: block; margin-bottom: 4px;">
+        <input type="radio" name="video-mode" value="LINKS_ONLY"> 
+        Convert to links only
+      </label>
+      <label style="display: block; margin-bottom: 8px;">
+        <input type="radio" name="video-mode" value="PRESERVE_ORIGINAL"> 
+        Keep original iframes
+      </label>
+      <label style="display: block;">
+        <input type="checkbox" id="privacy-mode" checked> 
+        Use privacy-enhanced embeds
+      </label>
+    </div>
+  </div>
 
   <div id="save-link-with-note-wrapper">
     <textarea id="save-link-with-note-textarea" rows="5"></textarea>

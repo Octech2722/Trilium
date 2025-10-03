@@ -169,6 +169,49 @@ chrome.runtime.onMessage.addListener(request => {
     }
 });
 
+// Video settings handling
+const $videoModeRadios = $('input[name="video-mode"]');
+const $privacyModeCheckbox = $('#privacy-mode');
+
+// Load saved video preferences
+async function loadVideoPreferences() {
+    try {
+        const result = await chrome.storage.sync.get(['trilium_video_processing_mode', 'trilium_video_privacy_mode']);
+
+        const savedMode = result.trilium_video_processing_mode || 'HYBRID';
+        const savedPrivacy = result.trilium_video_privacy_mode !== false; // Default true
+
+        $videoModeRadios.each(function() {
+            if (this.value === savedMode) {
+                this.checked = true;
+            }
+        });
+
+        $privacyModeCheckbox[0].checked = savedPrivacy;
+    } catch (error) {
+        console.warn('Failed to load video preferences:', error);
+    }
+}
+
+// Save video preferences
+async function saveVideoPreferences() {
+    try {
+        const selectedMode = $videoModeRadios.filter(':checked').val();
+        const privacyMode = $privacyModeCheckbox[0].checked;
+
+        await chrome.storage.sync.set({
+            'trilium_video_processing_mode': selectedMode,
+            'trilium_video_privacy_mode': privacyMode
+        });
+    } catch (error) {
+        console.warn('Failed to save video preferences:', error);
+    }
+}
+
+// Event listeners for video settings
+$videoModeRadios.on('change', saveVideoPreferences);
+$privacyModeCheckbox.on('change', saveVideoPreferences);
+
 const $checkConnectionButton = $("#check-connection-button");
 
 $checkConnectionButton.on("click", () => {
@@ -177,4 +220,7 @@ $checkConnectionButton.on("click", () => {
     })
 });
 
-$(() => chrome.runtime.sendMessage({name: "send-trilium-search-status"}));
+$(() => {
+    chrome.runtime.sendMessage({name: "send-trilium-search-status"});
+    loadVideoPreferences();
+});

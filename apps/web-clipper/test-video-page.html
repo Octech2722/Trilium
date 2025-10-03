@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Embedding Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .video-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .video-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        iframe {
+            max-width: 100%;
+            height: auto;
+        }
+        .video-links {
+            margin: 10px 0;
+        }
+        .video-links a {
+            display: block;
+            margin: 5px 0;
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .video-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Web Video Embedding Test Page</h1>
+    <p>This page contains various types of embedded videos to test the Trilium Web Clipper's video handling functionality.</p>
+
+    <div class="video-section">
+        <h3>📺 YouTube Videos</h3>
+        <p>Regular YouTube embed:</p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+        
+        <p>YouTube nocookie embed:</p>
+        <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/jNQXAC9IVRw" frameborder="0" allowfullscreen></iframe>
+        
+        <div class="video-links">
+            <h4>YouTube Links:</h4>
+            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Classic YouTube Link</a>
+            <a href="https://youtu.be/jNQXAC9IVRw">Short YouTube Link</a>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h3>🎭 Vimeo Videos</h3>
+        <p>Vimeo embed:</p>
+        <iframe src="https://player.vimeo.com/video/148751763" width="560" height="315" frameborder="0" allowfullscreen></iframe>
+        
+        <div class="video-links">
+            <h4>Vimeo Links:</h4>
+            <a href="https://vimeo.com/148751763">Vimeo Video Link</a>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h3>🌐 DailyMotion Videos</h3>
+        <p>DailyMotion embed:</p>
+        <iframe frameborder="0" width="560" height="315" src="https://www.dailymotion.com/embed/video/x2hwqn9" allowfullscreen></iframe>
+        
+        <div class="video-links">
+            <h4>DailyMotion Links:</h4>
+            <a href="https://www.dailymotion.com/video/x2hwqn9">DailyMotion Video Link</a>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h3>🎮 Twitch Videos</h3>
+        <div class="video-links">
+            <h4>Twitch Links:</h4>
+            <a href="https://www.twitch.tv/videos/123456789">Twitch VOD Link</a>
+            <p><em>Note: Twitch embeds require specific parent domain configuration</em></p>
+        </div>
+    </div>
+
+    <div class="video-section">
+        <h3>📚 Educational Content</h3>
+        <p>This article discusses various video platforms and their embedding capabilities. The content includes multiple video references and should test the clipper's ability to identify and process video content within article text.</p>
+        
+        <p>Some additional video references:</p>
+        <ul>
+            <li>Tutorial video: <a href="https://www.youtube.com/watch?v=example1">How to use Trilium Notes</a></li>
+            <li>Demo video: <a href="https://vimeo.com/example2">Advanced Note-Taking Techniques</a></li>
+            <li>Webinar: <a href="https://www.dailymotion.com/video/example3">Digital Organization Best Practices</a></li>
+        </ul>
+    </div>
+
+    <div class="video-section">
+        <h3>🔗 Mixed Content</h3>
+        <p>This section contains a mix of regular content, images, and video links to test how the clipper handles complex content structures.</p>
+        
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzMzNzNkYyIvPgogIDx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SW1hZ2U8L3RleHQ+Cjwvc3ZnPg==" alt="Sample Image" style="max-width: 200px; margin: 10px 0;">
+        
+        <p>Check out this video tutorial: <a href="https://www.youtube.com/watch?v=testVideo123">Complete Guide to Web Clipping</a></p>
+        
+        <p>And here's another resource: <a href="https://vimeo.com/testVideo456">Advanced Trilium Features</a></p>
+    </div>
+
+    <script>
+        // Add some dynamic content to test script handling
+        console.log('Video test page loaded');
+        
+        // Test dynamic video link creation
+        const dynamicSection = document.createElement('div');
+        dynamicSection.className = 'video-section';
+        dynamicSection.innerHTML = `
+            <h3>🔧 Dynamically Added Content</h3>
+            <p>This content was added via JavaScript:</p>
+            <a href="https://www.youtube.com/watch?v=dynamicVideo789">Dynamically Added Video Link</a>
+        `;
+        document.body.appendChild(dynamicSection);
+    </script>
+</body>
+</html>

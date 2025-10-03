@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# Demo script for testing the Web Video Embedding feature
+# This script helps test the video embedding functionality
+
+echo "🎬 Trilium Web Clipper - Video Embedding Feature Demo"
+echo "=================================================="
+echo ""
+
+echo "📋 This demo will help you test the new video embedding functionality:"
+echo ""
+
+echo "1. 🌐 Test Page Setup"
+echo "   - Open test-video-page.html in your browser"
+echo "   - This page contains various video embeds and links"
+echo ""
+
+echo "2. 🔧 Extension Setup"  
+echo "   - Load the updated web clipper extension"
+echo "   - Check that video settings appear in popup"
+echo "   - Verify different processing modes work"
+echo ""
+
+echo "3. 🧪 Testing Scenarios"
+echo "   a) Full Page Clipping:"
+echo "      - Click 'Save whole page' on the test page"
+echo "      - Verify videos are processed according to selected mode"
+echo "      - Check that video metadata appears in note labels"
+echo ""
+echo "   b) Selection Clipping:"
+echo "      - Select content with embedded videos"
+echo "      - Use Ctrl+Shift+S or context menu to clip"
+echo "      - Confirm videos are processed in selection"
+echo ""
+echo "   c) Settings Testing:"
+echo "      - Try different video processing modes"
+echo "      - Toggle privacy mode on/off"
+echo "      - Verify settings persist across browser sessions"
+echo ""
+
+echo "4. 🔍 Verification Steps"
+echo "   - YouTube videos use youtube-nocookie.com in privacy mode"
+echo "   - Vimeo embeds include dnt=1 parameter when privacy enabled"
+echo "   - Video links get enhanced with 📹 emoji"
+echo "   - Note labels include video count and platform information"
+echo ""
+
+echo "5. 🐛 Troubleshooting"
+echo "   - Check browser console for any error messages"
+echo "   - Verify Chrome storage permissions are granted"
+echo "   - Test with different video platforms and URL formats"
+echo ""
+
+echo "📚 Supported Video Platforms:"
+echo "   ✅ YouTube (youtube.com, youtu.be, youtube-nocookie.com)"
+echo "   ✅ Vimeo (vimeo.com)"
+echo "   ✅ DailyMotion (dailymotion.com)"
+echo "   ✅ Twitch (twitch.tv)"
+echo "   ✅ Archive.org and Wikimedia"
+echo ""
+
+echo "🔧 Available Processing Modes:"
+echo "   • Hybrid (default): Embeds + fallback links"
+echo "   • Embed Only: Clean embeds without links"
+echo "   • Links Only: Convert videos to text links"
+echo "   • Preserve Original: Keep original iframes"
+echo ""
+
+echo "💡 Pro Tips:"
+echo "   - Use 'Hybrid' mode for best compatibility"
+echo "   - Enable privacy mode for enhanced user privacy"
+echo "   - Check note labels for video processing summary"
+echo "   - Test with real video-heavy websites like blogs or news sites"
+echo ""
+
+echo "🎯 Expected Results:"
+echo "   - Videos are preserved during clipping"
+echo "   - Embeds use privacy-enhanced URLs when enabled"
+echo "   - Video links are clearly marked and accessible"
+echo "   - Processing statistics appear in note metadata"
+echo ""
+
+echo "Demo setup complete! Start testing by opening the test page and trying different clipping scenarios."
+echo ""
+echo "For detailed documentation, see VIDEO_EMBEDDING_FEATURE.md"

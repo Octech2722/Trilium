@@ -259,6 +259,179 @@ function getImages(container) {
 	return images;
 }
 
+function extractVideoId(url, platform) {
+	switch (platform) {
+		case 'youtube':
+			// Handle various YouTube URL formats
+			const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+			const ytMatch = url.match(ytRegex);
+			return ytMatch ? ytMatch[1] : null;
+
+		case 'vimeo':
+			// Handle Vimeo URLs
+			const vimeoRegex = /vimeo\.com\/(?:channels\/[^\/]+\/|groups\/[^\/]+\/videos\/|album\/\d+\/video\/|video\/|)(\d+)/;
+			const vimeoMatch = url.match(vimeoRegex);
+			return vimeoMatch ? vimeoMatch[1] : null;
+
+		case 'dailymotion':
+			// Handle DailyMotion URLs
+			const dmRegex = /dailymotion\.com\/video\/([^_\?]+)/;
+			const dmMatch = url.match(dmRegex);
+			return dmMatch ? dmMatch[1] : null;
+
+		case 'twitch':
+			// Handle Twitch URLs
+			const twitchRegex = /twitch\.tv\/(?:videos\/)?(\d+)/;
+			const twitchMatch = url.match(twitchRegex);
+			return twitchMatch ? twitchMatch[1] : null;
+
+		default:
+			return null;
+	}
+}
+
+function detectVideoPlatform(url) {
+	if (!url) return null;
+
+	if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube-nocookie.com')) {
+		return 'youtube';
+	} else if (url.includes('vimeo.com')) {
+		return 'vimeo';
+	} else if (url.includes('dailymotion.com')) {
+		return 'dailymotion';
+	} else if (url.includes('twitch.tv')) {
+		return 'twitch';
+	} else if (url.includes('archive.org') || url.includes('upload.wikimedia.org')) {
+		return 'archive';
+	}
+
+	return null;
+}
+
+function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
+	const privacyMode = options.privacyMode !== false; // Default true
+
+	switch (platform) {
+		case 'youtube':
+			const ytDomain = privacyMode ? 'www.youtube-nocookie.com' : 'www.youtube.com';
+			const ytParams = privacyMode ? 'rel=0&modestbranding=1' : '';
+			const ytSrc = `https://${ytDomain}/embed/${videoId}${ytParams ? '?' + ytParams : ''}`;
+			return `<iframe width="560" height="315" src="${ytSrc}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+
+		case 'vimeo':
+			const vimeoParams = privacyMode ? 'dnt=1' : '';
+			const vimeoSrc = `https://player.vimeo.com/video/${videoId}${vimeoParams ? '?' + vimeoParams : ''}`;
+			return `<iframe src="${vimeoSrc}" width="560" height="315" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+
+		case 'dailymotion':
+			const dmParams = privacyMode ? 'queue-enable=false' : '';
+			const dmSrc = `https://www.dailymotion.com/embed/video/${videoId}${dmParams ? '?' + dmParams : ''}`;
+			return `<iframe frameborder="0" width="560" height="315" src="${dmSrc}" allowfullscreen allow="autoplay"></iframe>`;
+
+		case 'twitch':
+			const twitchSrc = `https://player.twitch.tv/?video=${videoId}&parent=trilium.local`;
+			return `<iframe src="${twitchSrc}" frameborder="0" allowfullscreen="true" scrolling="no" height="315" width="560"></iframe>`;
+
+		default:
+			// For unsupported platforms, create a link
+			return `<p><strong>📹 Video:</strong> <a href="${originalUrl}" target="_blank">${originalUrl}</a></p>`;
+	}
+}
+
+function getEmbeddedVideos(container, options = {}) {
+	const videos = [];
+	const videoData = [];
+
+	// Default options
+	const settings = {
+		preserveIframes: options.preserveIframes !== false, // Default true
+		createEmbeds: options.createEmbeds !== false, // Default true
+		addVideoLinks: options.addVideoLinks !== false, // Default true
+		...options
+	};
+
+	// Find all iframes and extract video information
+	const iframes = container.getElementsByTagName('iframe');
+
+	for (let i = iframes.length - 1; i >= 0; i--) {
+		const iframe = iframes[i];
+		const src = iframe.src;
+
+		if (!src) continue;
+
+		const platform = detectVideoPlatform(src);
+
+		if (platform) {
+			const videoId = extractVideoId(src, platform);
+
+			if (videoId) {
+				const videoInfo = {
+					platform: platform,
+					videoId: videoId,
+					originalUrl: src,
+					title: iframe.title || `${platform.charAt(0).toUpperCase() + platform.slice(1)} Video`,
+					width: iframe.width || '560',
+					height: iframe.height || '315'
+				};
+
+				videoData.push(videoInfo);
+
+				if (settings.createEmbeds) {
+					// Replace the iframe with a new standardized embed
+					const newEmbed = createVideoEmbed(videoId, platform, src, settings);
+					const tempDiv = document.createElement('div');
+					tempDiv.innerHTML = newEmbed;
+					iframe.parentNode.replaceChild(tempDiv.firstChild, iframe);
+				} else if (settings.addVideoLinks) {
+					// Replace iframe with a video link
+					const videoLink = document.createElement('p');
+					videoLink.innerHTML = `<strong>📹 ${videoInfo.title}:</strong> <a href="${src}" target="_blank">${src}</a>`;
+					iframe.parentNode.replaceChild(videoLink, iframe);
+				} else if (!settings.preserveIframes) {
+					// Remove the iframe entirely
+					iframe.parentNode.removeChild(iframe);
+				}
+			}
+		}
+	}
+
+	// Also look for video links in regular anchor tags
+	const links = container.getElementsByTagName('a');
+
+	for (const link of links) {
+		if (!link.href) continue;
+
+		const platform = detectVideoPlatform(link.href);
+
+		if (platform) {
+			const videoId = extractVideoId(link.href, platform);
+
+			if (videoId && settings.addVideoLinks) {
+				const existingVideo = videoData.find(v => v.videoId === videoId && v.platform === platform);
+
+				if (!existingVideo) {
+					const videoInfo = {
+						platform: platform,
+						videoId: videoId,
+						originalUrl: link.href,
+						title: link.textContent || `${platform.charAt(0).toUpperCase() + platform.slice(1)} Video`,
+						width: '560',
+						height: '315'
+					};
+
+					videoData.push(videoInfo);
+
+					// Enhance the link with video information
+					link.innerHTML = `📹 ${link.innerHTML || videoInfo.title}`;
+					link.title = `${platform.charAt(0).toUpperCase() + platform.slice(1)} Video: ${videoInfo.title}`;
+				}
+			}
+		}
+	}
+
+	return videoData;
+}
+
 function createLink(clickAction, text, color = "lightskyblue") {
 	const link = document.createElement('a');
 	link.href = "javascript:";
@@ -269,6 +442,55 @@ function createLink(clickAction, text, color = "lightskyblue") {
 	});
 
 	return link
+}
+
+async function getUserVideoPreferences() {
+	try {
+		const result = await chrome.storage.sync.get(['trilium_video_processing_mode', 'trilium_video_privacy_mode']);
+
+		const mode = result.trilium_video_processing_mode || 'HYBRID';
+		const privacyMode = result.trilium_video_privacy_mode !== false; // Default true
+
+		// Map mode to options
+		const modeOptions = {
+			'EMBED_ONLY': {
+				preserveIframes: false,
+				createEmbeds: true,
+				addVideoLinks: false
+			},
+			'LINKS_ONLY': {
+				preserveIframes: false,
+				createEmbeds: false,
+				addVideoLinks: true
+			},
+			'PRESERVE_ORIGINAL': {
+				preserveIframes: true,
+				createEmbeds: false,
+				addVideoLinks: false
+			},
+			'HYBRID': {
+				preserveIframes: false,
+				createEmbeds: true,
+				addVideoLinks: true
+			}
+		};
+
+		return {
+			...modeOptions[mode],
+			privacyMode: privacyMode,
+			extractMetadata: true
+		};
+	} catch (error) {
+		console.warn('Failed to get video preferences, using defaults:', error);
+		// Return default hybrid mode
+		return {
+			preserveIframes: false,
+			createEmbeds: true,
+			addVideoLinks: true,
+			privacyMode: true,
+			extractMetadata: true
+		};
+	}
 }
 
 async function prepareMessageResponse(message) {
@@ -362,10 +584,17 @@ async function prepareMessageResponse(message) {
 
 		const images = getImages(container);
 
+		// Get user video preferences
+		const videoPrefs = await getUserVideoPreferences();
+
+		// Process embedded videos in selection with user preferences
+		const videos = getEmbeddedVideos(container, videoPrefs);
+
 		return {
 			title: pageTitle(),
 			content: container.innerHTML,
 			images: images,
+			videos: videos, // Include video metadata
 			pageUrl: getPageLocationOrigin() + location.pathname + location.search + location.hash
 		};
 
@@ -384,6 +613,12 @@ async function prepareMessageResponse(message) {
 
 		const images = getImages(body);
 
+		// Get user video preferences
+		const videoPrefs = await getUserVideoPreferences();
+
+		// Process embedded videos with user preferences
+		const videos = getEmbeddedVideos(body, videoPrefs);
+
         var labels = {};
 		const dates = getDocumentDates();
 		if (dates.publishedDate) {
@@ -393,10 +628,17 @@ async function prepareMessageResponse(message) {
 			labels['modifiedDate'] = dates.publishedDate.toISOString().substring(0, 10);
 		}
 
+		// Add video count as metadata if videos were found
+		if (videos.length > 0) {
+			labels['videoCount'] = videos.length.toString();
+			labels['videoPlatforms'] = [...new Set(videos.map(v => v.platform))].join(', ');
+		}
+
 		return {
 			title: title,
 			content: body.innerHTML,
 			images: images,
+			videos: videos, // Include video metadata
 			pageUrl: getPageLocationOrigin() + location.pathname + location.search,
 			clipType: 'page',
 			labels: labels
