@@ -172,14 +172,20 @@ chrome.runtime.onMessage.addListener(request => {
 // Video settings handling
 const $videoModeRadios = $('input[name="video-mode"]');
 const $privacyModeCheckbox = $('#privacy-mode');
+const $debugModeCheckbox = $('#debug-mode');
 
 // Load saved video preferences
 async function loadVideoPreferences() {
     try {
-        const result = await chrome.storage.sync.get(['trilium_video_processing_mode', 'trilium_video_privacy_mode']);
+        const result = await chrome.storage.sync.get([
+            'trilium_video_processing_mode',
+            'trilium_video_privacy_mode',
+            'trilium_video_debug_mode'
+        ]);
 
         const savedMode = result.trilium_video_processing_mode || 'HYBRID';
         const savedPrivacy = result.trilium_video_privacy_mode !== false; // Default true
+        const savedDebug = result.trilium_video_debug_mode === true; // Default false
 
         $videoModeRadios.each(function() {
             if (this.value === savedMode) {
@@ -188,20 +194,21 @@ async function loadVideoPreferences() {
         });
 
         $privacyModeCheckbox[0].checked = savedPrivacy;
+        $debugModeCheckbox[0].checked = savedDebug;
     } catch (error) {
         console.warn('Failed to load video preferences:', error);
     }
-}
-
-// Save video preferences
+}// Save video preferences
 async function saveVideoPreferences() {
     try {
         const selectedMode = $videoModeRadios.filter(':checked').val();
         const privacyMode = $privacyModeCheckbox[0].checked;
+        const debugMode = $debugModeCheckbox[0].checked;
 
         await chrome.storage.sync.set({
             'trilium_video_processing_mode': selectedMode,
-            'trilium_video_privacy_mode': privacyMode
+            'trilium_video_privacy_mode': privacyMode,
+            'trilium_video_debug_mode': debugMode
         });
     } catch (error) {
         console.warn('Failed to save video preferences:', error);
@@ -211,6 +218,7 @@ async function saveVideoPreferences() {
 // Event listeners for video settings
 $videoModeRadios.on('change', saveVideoPreferences);
 $privacyModeCheckbox.on('change', saveVideoPreferences);
+$debugModeCheckbox.on('change', saveVideoPreferences);
 
 const $checkConnectionButton = $("#check-connection-button");
 

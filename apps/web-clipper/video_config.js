@@ -11,7 +11,8 @@ export const VIDEO_CONFIG = {
         extractVideoMetadata: true,       // Extract and store video metadata
         enablePrivacyMode: true,          // Use privacy-enhanced embeds (e.g., youtube-nocookie)
         addVideoSummary: true,           // Add summary of processed videos
-        enhanceVideoLinks: true          // Enhance regular video links with emojis
+        enhanceVideoLinks: true,         // Enhance regular video links with emojis
+        enableDebugMode: false           // Enable debug logging (default off)
     },
 
     // Video processing modes
@@ -82,7 +83,8 @@ export const VIDEO_CONFIG = {
     STORAGE_KEYS: {
         VIDEO_PROCESSING_MODE: 'trilium_video_processing_mode',
         EMBED_DIMENSIONS: 'trilium_video_embed_dimensions',
-        PRIVACY_MODE: 'trilium_video_privacy_mode'
+        PRIVACY_MODE: 'trilium_video_privacy_mode',
+        DEBUG_MODE: 'trilium_video_debug_mode'
     }
 };
 
@@ -127,6 +129,14 @@ export class VideoPreferences {
 
     static async getPrivacyMode() {
         return await this.get(VIDEO_CONFIG.STORAGE_KEYS.PRIVACY_MODE, true);
+    }
+
+    static async getDebugMode() {
+        return await this.get(VIDEO_CONFIG.STORAGE_KEYS.DEBUG_MODE, false);
+    }
+
+    static async setDebugMode(enabled) {
+        return await this.set(VIDEO_CONFIG.STORAGE_KEYS.DEBUG_MODE, enabled);
     }
 }
 

@@ -291,30 +291,30 @@ function extractVideoId(url, platform) {
 }
 
 function detectVideoPlatform(url) {
-	console.log('[VIDEO DEBUG] detectVideoPlatform called with URL:', url);
+	debugDebug('detectVideoPlatform called with URL:', url);
 	if (!url) {
-		console.log('[VIDEO DEBUG] No URL provided');
+		debugDebug('No URL provided');
 		return null;
 	}
 
 	if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube-nocookie.com')) {
-		console.log('[VIDEO DEBUG] Detected YouTube platform');
+		debugInfo('Detected YouTube platform for:', url);
 		return 'youtube';
 	} else if (url.includes('vimeo.com')) {
-		console.log('[VIDEO DEBUG] Detected Vimeo platform');
+		debugInfo('Detected Vimeo platform for:', url);
 		return 'vimeo';
 	} else if (url.includes('dailymotion.com')) {
-		console.log('[VIDEO DEBUG] Detected DailyMotion platform');
+		debugInfo('Detected DailyMotion platform for:', url);
 		return 'dailymotion';
 	} else if (url.includes('twitch.tv')) {
-		console.log('[VIDEO DEBUG] Detected Twitch platform');
+		debugInfo('Detected Twitch platform for:', url);
 		return 'twitch';
 	} else if (url.includes('archive.org') || url.includes('upload.wikimedia.org')) {
-		console.log('[VIDEO DEBUG] Detected Archive platform');
+		debugInfo('Detected Archive platform for:', url);
 		return 'archive';
 	}
 
-	console.log('[VIDEO DEBUG] No video platform detected');
+	debugDebug('No video platform detected for:', url);
 	return null;
 }
 
@@ -349,7 +349,10 @@ function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
 }
 
 function getEmbeddedVideos(container, options = {}) {
-	console.log('[VIDEO DEBUG] getEmbeddedVideos called with options:', options);
+	const startTime = Date.now();
+	debugInfo('Starting video processing...');
+	debugDebug('getEmbeddedVideos called with options:', options);
+
 	const videos = [];
 	const videoData = [];
 
@@ -360,19 +363,19 @@ function getEmbeddedVideos(container, options = {}) {
 		addVideoLinks: options.addVideoLinks !== false, // Default true
 		...options
 	};
-	console.log('[VIDEO DEBUG] Final settings:', settings);
+	debugDebug('Final settings:', settings);
 
 	// Find all iframes and extract video information
 	const iframes = container.getElementsByTagName('iframe');
-	console.log('[VIDEO DEBUG] Found', iframes.length, 'iframes in container');
+	debugInfo(`Found ${iframes.length} iframes in container`);
 
 	for (let i = iframes.length - 1; i >= 0; i--) {
 		const iframe = iframes[i];
 		const src = iframe.src;
-		console.log('[VIDEO DEBUG] Processing iframe', i, 'with src:', src);
+		debugDebug(`Processing iframe ${i} with src:`, src);
 
 		if (!src) {
-			console.log('[VIDEO DEBUG] Iframe has no src, skipping');
+			debugDebug(`Iframe ${i} has no src, skipping`);
 			continue;
 		}
 
@@ -414,21 +417,21 @@ function getEmbeddedVideos(container, options = {}) {
 
 	// Also look for video links in regular anchor tags
 	const links = container.getElementsByTagName('a');
-	console.log('[VIDEO DEBUG] Found', links.length, 'links in container');
+	debugInfo(`Found ${links.length} links in container`);
 
 	for (const link of links) {
-		console.log('[VIDEO DEBUG] Processing link with href:', link.href);
+		debugDebug('Processing link with href:', link.href);
 		if (!link.href) {
-			console.log('[VIDEO DEBUG] Link has no href, skipping');
+			debugDebug('Link has no href, skipping');
 			continue;
 		}
 
 		const platform = detectVideoPlatform(link.href);
 
 		if (platform) {
-			console.log('[VIDEO DEBUG] Link detected as', platform, 'platform');
+			debugInfo(`Link detected as ${platform} platform:`, link.href);
 			const videoId = extractVideoId(link.href, platform);
-			console.log('[VIDEO DEBUG] Extracted video ID:', videoId);
+			debugDebug('Extracted video ID:', videoId);
 
 			if (videoId && settings.addVideoLinks) {
 				const existingVideo = videoData.find(v => v.videoId === videoId && v.platform === platform);
@@ -453,7 +456,18 @@ function getEmbeddedVideos(container, options = {}) {
 		}
 	}
 
-	console.log('[VIDEO DEBUG] Returning', videoData.length, 'processed videos:', videoData);
+	const duration = Date.now() - startTime;
+	debugInfo(`Video processing complete: ${videoData.length} videos processed in ${duration}ms`);
+
+	if (videoData.length > 0) {
+		const summary = videoData.reduce((acc, video) => {
+			acc[video.platform] = (acc[video.platform] || 0) + 1;
+			return acc;
+		}, {});
+		debugInfo('Video summary by platform:', summary);
+		debugDebug('Detailed video data:', videoData);
+	}
+
 	return videoData;
 }
 
@@ -469,14 +483,48 @@ function createLink(clickAction, text, color = "lightskyblue") {
 	return link
 }
 
+// Debug logging utilities
+let debugEnabled = null; // Cache debug state to avoid repeated storage calls
+
+async function refreshDebugState() {
+	try {
+		const result = await chrome.storage.sync.get(['trilium_video_debug_mode']);
+		debugEnabled = result.trilium_video_debug_mode === true;
+	} catch (error) {
+		debugEnabled = false;
+	}
+}
+
+async function debugLog(level = 'INFO', ...args) {
+	if (debugEnabled === null) {
+		await refreshDebugState();
+	}
+
+	if (debugEnabled) {
+		const timestamp = new Date().toISOString().substr(11, 12);
+		const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
+		const icon = icons[level] || '📹';
+		console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
+	}
+}
+
+// Convenience functions
+async function debugError(...args) { await debugLog('ERROR', ...args); }
+async function debugWarn(...args) { await debugLog('WARN', ...args); }
+async function debugInfo(...args) { await debugLog('INFO', ...args); }
+async function debugDebug(...args) { await debugLog('DEBUG', ...args); }
+
 async function getUserVideoPreferences() {
 	try {
-		const result = await chrome.storage.sync.get(['trilium_video_processing_mode', 'trilium_video_privacy_mode']);
+		const result = await chrome.storage.sync.get([
+			'trilium_video_processing_mode',
+			'trilium_video_privacy_mode',
+			'trilium_video_debug_mode'
+		]);
 
 		const mode = result.trilium_video_processing_mode || 'HYBRID';
 		const privacyMode = result.trilium_video_privacy_mode !== false; // Default true
-
-		// Map mode to options
+		const debugMode = result.trilium_video_debug_mode === true; // Default false		// Map mode to options
 		const modeOptions = {
 			'EMBED_ONLY': {
 				preserveIframes: false,
@@ -503,6 +551,7 @@ async function getUserVideoPreferences() {
 		return {
 			...modeOptions[mode],
 			privacyMode: privacyMode,
+			debugMode: debugMode,
 			extractMetadata: true
 		};
 	} catch (error) {
@@ -513,6 +562,7 @@ async function getUserVideoPreferences() {
 			createEmbeds: true,
 			addVideoLinks: true,
 			privacyMode: true,
+			debugMode: false,
 			extractMetadata: true
 		};
 	}
@@ -595,13 +645,16 @@ async function prepareMessageResponse(message) {
 		return { success: true }; // Return a response
 	}
 	else if (message.name === "trilium-save-selection") {
+		debugInfo('=== Starting selection clipping process ===');
+		await refreshDebugState(); // Refresh debug state for this operation
+
 		const container = document.createElement('div');
 
 		const selection = window.getSelection();
+		debugInfo(`Processing selection with ${selection.rangeCount} ranges`);
 
 		for (let i = 0; i < selection.rangeCount; i++) {
 			const range = selection.getRangeAt(i);
-
 			container.appendChild(range.cloneContents());
 		}
 
@@ -611,6 +664,7 @@ async function prepareMessageResponse(message) {
 
 		// Get user video preferences
 		const videoPrefs = await getUserVideoPreferences();
+		debugInfo('Using video preferences for selection:', videoPrefs);
 
 		// Process embedded videos in selection with user preferences
 		const videos = getEmbeddedVideos(container, videoPrefs);
@@ -628,13 +682,15 @@ async function prepareMessageResponse(message) {
 		return getRectangleArea();
 	}
 	else if (message.name === "trilium-save-page") {
-		console.log('[VIDEO DEBUG] trilium-save-page message received');
+		debugInfo('=== Starting page clipping process ===');
+		await refreshDebugState(); // Refresh debug state for this operation
+
 		await requireLib("/lib/JSDOMParser.js");
 		await requireLib("/lib/Readability.js");
 		await requireLib("/lib/Readability-readerable.js");
 
 		const {title, body} = getReadableDocument();
-		console.log('[VIDEO DEBUG] Got readable document, body has', body.children.length, 'children');
+		debugInfo(`Got readable document: "${title}", body has ${body.children.length} children`);
 
 		makeLinksAbsolute(body);
 
@@ -642,11 +698,11 @@ async function prepareMessageResponse(message) {
 
 		// Get user video preferences
 		const videoPrefs = await getUserVideoPreferences();
-		console.log('[VIDEO DEBUG] Got video preferences:', videoPrefs);
+		debugInfo('Using video preferences:', videoPrefs);
 
 		// Process embedded videos with user preferences
 		const videos = getEmbeddedVideos(body, videoPrefs);
-		console.log('[VIDEO DEBUG] Processed videos result:', videos);
+		debugInfo(`Final result: ${videos.length} videos processed`);
 
         var labels = {};
 		const dates = getDocumentDates();
