@@ -7,23 +7,27 @@ This feature enhances the Trilium Web Clipper to properly handle embedded video 
 ## Supported Platforms
 
 ### Fully Supported Video Platforms
+
 - **YouTube** (`youtube.com`, `youtu.be`, `youtube-nocookie.com`)
 - **Vimeo** (`vimeo.com`)
 - **DailyMotion** (`dailymotion.com`)
 - **Twitch** (`twitch.tv`)
 
 ### Archive Platforms
+
 - **Internet Archive** (`archive.org`)
 - **Wikimedia** (`upload.wikimedia.org`)
 
 ## Features
 
 ### 🎯 Smart Video Detection
+
 - Automatically detects video iframes and links during page clipping
 - Extracts video IDs from various URL formats
 - Supports both embedded iframes and direct video links
 
 ### 🔧 Multiple Processing Modes
+
 1. **Hybrid Mode** (Default)
    - Creates standardized embeds for supported platforms
    - Adds fallback links for accessibility
@@ -45,12 +49,14 @@ This feature enhances the Trilium Web Clipper to properly handle embedded video 
    - Use when original embed behavior is crucial
 
 ### 🔒 Privacy-Enhanced Features
+
 - **YouTube**: Uses `youtube-nocookie.com` domain by default
 - **Vimeo**: Adds `dnt=1` (Do Not Track) parameter
 - **DailyMotion**: Disables video queue for privacy
 - User-configurable privacy settings in popup
 
 ### 📊 Metadata Extraction
+
 - Captures video titles, dimensions, and platform information
 - Adds video count and platform summary to note labels
 - Preserves original URLs for reference
@@ -58,6 +64,7 @@ This feature enhances the Trilium Web Clipper to properly handle embedded video 
 ## User Interface
 
 ### Popup Controls
+
 The web clipper popup includes a new "📹 Video Handling" section with:
 
 - **Processing Mode Selection**:
@@ -69,6 +76,7 @@ The web clipper popup includes a new "📹 Video Handling" section with:
   - Applies platform-specific privacy parameters
 
 ### Visual Indicators
+
 - Video links are enhanced with 📹 emoji
 - Clear labeling of video content in processed notes
 - Platform identification for each video
@@ -107,6 +115,7 @@ The web clipper popup includes a new "📹 Video Handling" section with:
 ## Configuration Options
 
 ### Available Settings
+
 ```javascript
 {
   preserveOriginalIframes: false,    // Keep original iframes
@@ -120,6 +129,7 @@ The web clipper popup includes a new "📹 Video Handling" section with:
 ```
 
 ### Storage Keys
+
 - `trilium_video_processing_mode`: User's preferred processing mode
 - `trilium_video_privacy_mode`: Privacy enhancement setting
 - `trilium_video_embed_dimensions`: Preferred embed dimensions
@@ -127,13 +137,16 @@ The web clipper popup includes a new "📹 Video Handling" section with:
 ## Testing
 
 ### Test Page
+
 A comprehensive test page (`test-video-page.html`) is included with:
+
 - Various video platform embeds
 - Direct video links
 - Mixed content scenarios
 - Dynamic content generation
 
 ### Test Scenarios
+
 1. **Full Page Clipping**: Test with video-rich pages
 2. **Selection Clipping**: Select content containing videos
 3. **Settings Changes**: Verify preference persistence
@@ -143,12 +156,14 @@ A comprehensive test page (`test-video-page.html`) is included with:
 ## Usage Examples
 
 ### Before Enhancement
+
 ```html
 <!-- Original iframe gets lost or broken -->
 <div>[Content clipped without video]</div>
 ```
 
 ### After Enhancement (Hybrid Mode)
+
 ```html
 <!-- Clean, standardized embed -->
 <iframe width="560" height="315" 
@@ -166,11 +181,13 @@ A comprehensive test page (`test-video-page.html`) is included with:
 ## Browser Compatibility
 
 ### Supported Browsers
+
 - **Chrome**: Full support (Manifest V2/V3)
 - **Firefox**: Full support with polyfills
 - **Edge**: Full support (Chromium-based)
 
 ### API Dependencies
+
 - Chrome Storage API (for preferences)
 - Content Script injection
 - Background script messaging
@@ -178,6 +195,7 @@ A comprehensive test page (`test-video-page.html`) is included with:
 ## Future Enhancements
 
 ### Planned Features
+
 - **Additional Platforms**: TikTok, Instagram, Twitter video support
 - **Thumbnail Extraction**: Capture video thumbnails for offline viewing
 - **Timestamp Support**: Handle video links with specific timestamps
@@ -186,7 +204,9 @@ A comprehensive test page (`test-video-page.html`) is included with:
 - **Responsive Embeds**: Automatic sizing based on note width
 
 ### Extensibility
+
 The modular architecture allows easy addition of new video platforms by:
+
 1. Adding platform regex patterns to `VIDEO_REGEX_PATTERNS`
 2. Implementing platform-specific ID extraction
 3. Creating embed template functions
@@ -195,11 +215,13 @@ The modular architecture allows easy addition of new video platforms by:
 ## Migration Guide
 
 ### Existing Notes
+
 - No migration required for existing notes
 - New video processing applies to future clips
 - Users can re-clip pages to get enhanced video handling
 
 ### Extension Updates
+
 - Settings automatically migrate to new versions
 - Backward compatibility maintained for existing preferences
 - Graceful fallback to default settings if needed
@@ -207,12 +229,14 @@ The modular architecture allows easy addition of new video platforms by:
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Videos not embedding**: Check platform support and URL format
 2. **Privacy mode not working**: Verify settings in popup
 3. **Preferences not saving**: Check Chrome storage permissions
 4. **Embeds not loading**: Confirm Trilium server allows iframe content
 
 ### Debug Information
+
 - Video processing metadata included in note labels
 - Console logging available for development
 - Test page provided for verification
@@ -220,6 +244,7 @@ The modular architecture allows easy addition of new video platforms by:
 ## Contributing
 
 To extend video platform support:
+
 1. Add platform detection regex to `VIDEO_REGEX_PATTERNS`
 2. Implement video ID extraction logic
 3. Create embed template with privacy options
