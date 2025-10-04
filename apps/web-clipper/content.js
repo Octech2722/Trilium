@@ -349,7 +349,7 @@ function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
 
 		default:
 			// For unsupported platforms, create a link
-			return `<p><strong>📹 Video:</strong> <a href="${originalUrl}" target="_blank">${originalUrl}</a></p>`;
+			return `<p><strong>Video:</strong> <a href="${originalUrl}" target="_blank">${originalUrl}</a></p>`;
 	}
 }
 
@@ -416,7 +416,7 @@ function getEmbeddedVideos(container, options = {}) {
 				} else if (settings.addVideoLinks) {
 					// Replace iframe with a video link
 					const videoLink = document.createElement('p');
-					videoLink.innerHTML = `<strong>📹 ${videoInfo.title}:</strong> <a href="${src}" target="_blank">${src}</a>`;
+					videoLink.innerHTML = `<strong>Video: ${videoInfo.title}:</strong> <a href="${src}" target="_blank">${src}</a>`;
 					iframe.parentNode.replaceChild(videoLink, iframe);
 				} else if (!settings.preserveIframes) {
 					// Remove the iframe entirely
@@ -460,7 +460,7 @@ function getEmbeddedVideos(container, options = {}) {
 					videoData.push(videoInfo);
 
 					// Enhance the link with video information
-					link.innerHTML = `📹 ${link.innerHTML || videoInfo.title}`;
+					link.innerHTML = `Video: ${link.innerHTML || videoInfo.title}`;
 					link.title = `${platform.charAt(0).toUpperCase() + platform.slice(1)} Video: ${videoInfo.title}`;
 				}
 			}
@@ -504,16 +504,16 @@ function debugLog(level = 'INFO', ...args) {
 		chrome.storage.sync.get(['trilium_video_debug_mode']).then(result => {
 			if (result.trilium_video_debug_mode === true) {
 				const timestamp = new Date().toISOString().substr(11, 12);
-				const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
-				const icon = icons[level] || '📹';
+				const icons = { ERROR: '[ERR]', WARN: '[WARN]', INFO: '[INFO]', DEBUG: '[DEBUG]' };
+				const icon = icons[level] || '[VIDEO]';
 				console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
 			}
 		}).catch(() => {
 			// If storage fails, check URL parameter
 			if (window.location.search.includes('debug=true')) {
 				const timestamp = new Date().toISOString().substr(11, 12);
-				const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
-				const icon = icons[level] || '📹';
+				const icons = { ERROR: '[ERR]', WARN: '[WARN]', INFO: '[INFO]', DEBUG: '[DEBUG]' };
+				const icon = icons[level] || '[VIDEO]';
 				console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
 			}
 		});
@@ -521,8 +521,8 @@ function debugLog(level = 'INFO', ...args) {
 		// Fallback: check URL parameter when chrome APIs not available
 		if (window.location.search.includes('debug=true')) {
 			const timestamp = new Date().toISOString().substr(11, 12);
-			const icons = { ERROR: '🔴', WARN: '🟡', INFO: '🔵', DEBUG: '🟢' };
-			const icon = icons[level] || '📹';
+			const icons = { ERROR: '[ERR]', WARN: '[WARN]', INFO: '[INFO]', DEBUG: '[DEBUG]' };
+			const icon = icons[level] || '[VIDEO]';
 			console.log(`[${timestamp}] ${icon} VIDEO ${level}:`, ...args);
 		}
 	}
