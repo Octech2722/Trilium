@@ -355,12 +355,12 @@ function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
 
 function getEmbeddedVideos(container, options = {}) {
 	const startTime = Date.now();
-	
+
 	// Force debug test - this should always show
-	console.log('🧪 FORCED DEBUG TEST - getEmbeddedVideos called');
-	console.log('🧪 Container type:', container.tagName || 'unknown');
-	console.log('🧪 Options:', options);
-	
+	console.log('[DEBUG] FORCED DEBUG TEST - getEmbeddedVideos called');
+	console.log('[DEBUG] Container type:', container.tagName || 'unknown');
+	console.log('[DEBUG] Options:', options);
+
 	debugInfo('Starting video processing...');
 	debugDebug('getEmbeddedVideos called with options:', options);
 
@@ -545,7 +545,7 @@ async function getUserVideoPreferences() {
 		const mode = result.trilium_video_processing_mode || 'HYBRID';
 		const privacyMode = result.trilium_video_privacy_mode !== false; // Default true
 		const debugMode = result.trilium_video_debug_mode === true; // Default false
-		
+
 		// Map mode to options
 		const modeOptions = {
 			'EMBED_ONLY': {
@@ -592,10 +592,10 @@ async function getUserVideoPreferences() {
 
 async function prepareMessageResponse(message) {
 	console.info('Message: ' + message.name);
-	
+
 	// Force debug test - this should always show
-	console.log('🧪 FORCED DEBUG TEST - Message received:', message.name);
-	
+	console.log('[DEBUG] FORCED DEBUG TEST - Message received:', message.name);
+
 	// Test debug functionality on every message
 	debugInfo(`Processing message: ${message.name}`);	if (message.name === "ping") {
 		return { success: true };
@@ -792,10 +792,10 @@ async function requireLib(libPath) {
 }
 
 // Initialize and test debug system when content script loads
-console.log('🧪 TRILIUM CONTENT SCRIPT LOADED');
-console.log('🧪 Chrome APIs available:', typeof chrome !== 'undefined');
-console.log('🧪 Location:', window.location.href);
+console.log('[DEBUG] TRILIUM CONTENT SCRIPT LOADED');
+console.log('[DEBUG] Chrome APIs available:', typeof chrome !== 'undefined');
+console.log('[DEBUG] Location:', window.location.href);
 
 // Test debug immediately
 debugInfo('Content script loaded successfully');
-console.log('🧪 Debug test completed');
+console.log('[DEBUG] Debug test completed');
