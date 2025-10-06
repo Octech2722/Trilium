@@ -1194,3 +1194,5 @@
 if (typeof module === "object") {
   module.exports = this.JSDOMParser;
 }
+
+console.log('*** TRILIUM JSDOMPARSER LIBRARY LOADED ***');

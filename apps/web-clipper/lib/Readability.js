@@ -2281,3 +2281,5 @@ Readability.prototype = {
 if (typeof module === "object") {
   module.exports = Readability;
 }
+
+console.log('*** TRILIUM READABILITY LIBRARY LOADED ***');

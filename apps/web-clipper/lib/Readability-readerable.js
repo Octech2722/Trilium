@@ -106,3 +106,5 @@ function isProbablyReaderable(doc, options = {}) {
 if (typeof module === "object") {
   module.exports = isProbablyReaderable;
 }
+
+console.log('*** TRILIUM READABILITY-READERABLE LIBRARY LOADED ***');

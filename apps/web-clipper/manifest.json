@@ -35,13 +35,10 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["lib/*", "utils.js", "trilium_server_facade.js", "content.js"],
+      "resources": ["lib/*", "utils.js", "trilium_server_facade.js", "content.js", "minimal-content.js", "debug-content.js", "ultra-simple.js", "working-video.js", "final-video.js", "options/*"],
       "matches": ["<all_urls>"]
     }
   ],
-  "options_ui": {
-    "page": "options/options.html"
-  },
   "commands": {
     "saveSelection": {
       "description": "Save the selected text into a note",

@@ -1,3 +1,41 @@
+// Content script initialization - debug message will be shown after debug system loads
+
+// Debug helper function - will use TriliumDebug when available
+function debug(level, message, ...args) {
+    if (window.TriliumDebug) {
+        window.TriliumDebug.content(level, message, ...args);
+    } else {
+        console.log(`[CONTENT] ${message}`, ...args);
+    }
+}
+
+// Toast helper function - ensures toast library is loaded before using
+async function ensureToastLoaded() {
+    if (typeof window.showToast === 'undefined') {
+        await requireLib('/lib/toast.js');
+        // Give a small delay to ensure the library is fully initialized
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+}
+
+// Safe toast function with fallback
+async function safeShowToast(message, options = {}) {
+    try {
+        await ensureToastLoaded();
+        if (typeof window.showToast === 'function') {
+            return window.showToast(message, options);
+        } else {
+            debug('warn', 'showToast not available, using console fallback:', message);
+            console.log(`[TOAST] ${message}`);
+            return null;
+        }
+    } catch (error) {
+        debug('error', 'Toast system failed:', error.message);
+        console.log(`[TOAST FALLBACK] ${message}`);
+        return null;
+    }
+}
+
 // Utility functions (inline to avoid module dependency issues)
 function randomString(len) {
     let text = "";
@@ -356,10 +394,11 @@ function createVideoEmbed(videoId, platform, originalUrl, options = {}) {
 function getEmbeddedVideos(container, options = {}) {
 	const startTime = Date.now();
 
-	// Force debug test - this should always show
-	console.log('[DEBUG] FORCED DEBUG TEST - getEmbeddedVideos called');
-	console.log('[DEBUG] Container type:', container.tagName || 'unknown');
-	console.log('[DEBUG] Options:', options);
+	// FORCED DEBUG - SHOULD ALWAYS APPEAR
+	console.log('*** GETVIDEOSFUNCTION CALLED - TIMESTAMP 20251003-215000 ***');
+	debug('debug', 'getEmbeddedVideos called');
+	debug('debug', 'Container type:', container.tagName || 'unknown');
+	debug('debug', 'Processing options:', options);
 
 	debugInfo('Starting video processing...');
 	debugDebug('getEmbeddedVideos called with options:', options);
@@ -594,13 +633,17 @@ async function prepareMessageResponse(message) {
 	console.info('Message: ' + message.name);
 
 	// Force debug test - this should always show
-	console.log('[DEBUG] FORCED DEBUG TEST - Message received:', message.name);
+	debug('debug', 'Message received:', message.name);
 
 	// Test debug functionality on every message
-	debugInfo(`Processing message: ${message.name}`);	if (message.name === "ping") {
+	debugInfo(`Processing message: ${message.name}`);
+
+	if (message.name === "ping") {
+		console.log('[DEBUG] PING handler executed');
 		return { success: true };
 	}
 	else if (message.name === "toast") {
+		console.log('[DEBUG] TOAST handler executed');
 		let messageText;
 
 		if (message.noteId) {
@@ -626,9 +669,7 @@ async function prepareMessageResponse(message) {
 			messageText = message.message;
 		}
 
-		await requireLib('/lib/toast.js');
-
-		showToast(messageText, {
+		await safeShowToast(messageText, {
 			settings: {
 				duration: 7000
 			}
@@ -637,15 +678,13 @@ async function prepareMessageResponse(message) {
 		return { success: true }; // Return a response
 	}
 	else if (message.name === "status-toast") {
-		await requireLib('/lib/toast.js');
-
 		// Hide any existing status toast
 		if (window.triliumStatusToast && window.triliumStatusToast.hide) {
 			window.triliumStatusToast.hide();
 		}
 
 		// Store reference to the status toast so we can replace it
-		window.triliumStatusToast = showToast(message.message, {
+		window.triliumStatusToast = await safeShowToast(message.message, {
 			settings: {
 				duration: message.isProgress ? 60000 : 5000 // Long duration for progress, shorter for errors
 			}
@@ -654,15 +693,13 @@ async function prepareMessageResponse(message) {
 		return { success: true }; // Return a response
 	}
 	else if (message.name === "update-status-toast") {
-		await requireLib('/lib/toast.js');
-
 		// Hide the previous status toast
 		if (window.triliumStatusToast && window.triliumStatusToast.hide) {
 			window.triliumStatusToast.hide();
 		}
 
 		// Show new toast with updated message
-		window.triliumStatusToast = showToast(message.message, {
+		window.triliumStatusToast = await safeShowToast(message.message, {
 			settings: {
 				duration: message.isProgress ? 60000 : 5000
 			}
@@ -671,6 +708,7 @@ async function prepareMessageResponse(message) {
 		return { success: true }; // Return a response
 	}
 	else if (message.name === "trilium-save-selection") {
+		console.log('[DEBUG] SAVE-SELECTION handler executed');
 		// Initialize debug state early
 		if (debugEnabled === null) {
 			refreshDebugState();
@@ -711,54 +749,99 @@ async function prepareMessageResponse(message) {
 		return getRectangleArea();
 	}
 	else if (message.name === "trilium-save-page") {
+		debug('info', 'TRILIUM-SAVE-PAGE handler started');
 		// Initialize debug state early
 		if (debugEnabled === null) {
 			refreshDebugState();
 		}
 		debugInfo('=== Starting page clipping process ===');
 
+		await requireLib("/lib/debug.js");
+
+		// Debug-only content script loading notification
+		debug('info', `Trilium Web Clipper content script loaded at ${new Date().toISOString()}`);
+
 		await requireLib("/lib/JSDOMParser.js");
 		await requireLib("/lib/Readability.js");
 		await requireLib("/lib/Readability-readerable.js");
+		await requireLib("/lib/video-processor.js");
 
-		const {title, body} = getReadableDocument();
-		debugInfo(`Got readable document: "${title}", body has ${body.children.length} children`);
+		let title, body;
+		try {
+			const readable = getReadableDocument();
+			title = readable.title;
+			body = readable.body;
+			debugInfo(`Got readable document: "${title}", body has ${body ? body.children.length : 0} children`);
+		} catch (readabilityError) {
+			debug('error', 'Readability processing failed:', readabilityError.message);
+			// Fallback to document title and body
+			title = document.title || 'Clipped note';
+			body = document.body ? document.body.cloneNode(true) : document.createElement('div');
+			debug('info', 'Using fallback title and body due to Readability failure');
+		}
 
 		makeLinksAbsolute(body);
 
 		const images = getImages(body);
 
 		// Get user video preferences
+		debug('debug', 'Getting user video preferences...');
 		const videoPrefs = await getUserVideoPreferences();
+		debug('debug', 'Got video preferences:', videoPrefs);
 		debugInfo('Using video preferences:', videoPrefs);
 
-		// Process embedded videos with user preferences
-		const videos = getEmbeddedVideos(body, videoPrefs);
-		debugInfo(`Final result: ${videos.length} videos processed`);
+		// Process embedded videos with our new video processor module
+		debug('info', 'Using TriliumVideoProcessor module for video processing');
+		const videoResult = window.TriliumVideoProcessor.processEmbeddedVideos(body, videoPrefs);
+		const videos = videoResult.videos;
+		debug('info', `TriliumVideoProcessor returned ${videos.length} videos`);
+		debugInfo(`Final result: ${videos.length} videos processed with visible links added`);
 
         var labels = {};
-		const dates = getDocumentDates();
-		if (dates.publishedDate) {
-			labels['publishedDate'] = dates.publishedDate.toISOString().substring(0, 10);
-		}
-		if (dates.modifiedDate) {
-			labels['modifiedDate'] = dates.publishedDate.toISOString().substring(0, 10);
+		try {
+			const dates = getDocumentDates();
+			if (dates && dates.publishedDate && typeof dates.publishedDate.toISOString === 'function') {
+				labels['publishedDate'] = dates.publishedDate.toISOString().substring(0, 10);
+			}
+			if (dates && dates.modifiedDate && typeof dates.modifiedDate.toISOString === 'function') {
+				labels['modifiedDate'] = dates.modifiedDate.toISOString().substring(0, 10);
+			}
+		} catch (dateError) {
+			debug('warn', 'Failed to process document dates:', dateError.message);
 		}
 
 		// Add video count as metadata if videos were found
-		if (videos.length > 0) {
+		if (videos && videos.length > 0) {
 			labels['videoCount'] = videos.length.toString();
-			labels['videoPlatforms'] = [...new Set(videos.map(v => v.platform))].join(', ');
+			try {
+				labels['videoPlatforms'] = [...new Set(videos.map(v => v.platform))].join(', ');
+			} catch (platformError) {
+				debug('warn', 'Failed to process video platforms:', platformError.message);
+				labels['videoPlatforms'] = 'unknown';
+			}
+			console.log('*** FINAL CONTENT CHECK - Videos found:', videos.length);
+			if (body && body.innerHTML) {
+				console.log('*** FINAL CONTENT - First 500 chars:', body.innerHTML.substring(0, 500));
+				console.log('*** FINAL CONTENT - Contains iframe?', body.innerHTML.includes('iframe'));
+			}
+			console.log('*** FINAL CONTENT - Contains Embedded Video?', videos.length > 0);
 		}
 
+		// Ensure we have valid data to return
+		const safeTitle = title || document.title || 'Clipped note';
+		const safeContent = (body && body.innerHTML) ? body.innerHTML : '<p>Content could not be extracted</p>';
+		const safeImages = images || [];
+		const safeVideos = videos || [];
+		const safeLabels = labels || {};
+
 		return {
-			title: title,
-			content: body.innerHTML,
-			images: images,
-			videos: videos, // Include video metadata
+			title: safeTitle,
+			content: safeContent,
+			images: safeImages,
+			videos: safeVideos, // Include video metadata
 			pageUrl: getPageLocationOrigin() + location.pathname + location.search,
 			clipType: 'page',
-			labels: labels
+			labels: safeLabels
 		};
 	}
 	else {

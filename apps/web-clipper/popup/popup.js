@@ -15,7 +15,109 @@ const $saveWholeScreenShotButton = $("#save-whole-screenshot-button");
 const $saveWholePageButton = $("#save-whole-page-button");
 const $saveTabsButton = $("#save-tabs-button");
 
-$showOptionsButton.on("click", () => chrome.runtime.openOptionsPage());
+// View switching functionality
+function showView(viewId) {
+    // Hide all views
+    $('.view').hide();
+    // Show the requested view
+    $('#' + viewId).show();
+}
+
+function showMainView() {
+    showView('main-view');
+}
+
+function showSettingsView() {
+    showView('settings-view');
+    loadSettingsData();
+}
+
+// Settings data loading
+async function loadSettingsData() {
+    try {
+        // Load video settings
+        const videoResult = await chrome.storage.sync.get([
+            'trilium_video_processing_mode',
+            'trilium_video_privacy_mode'
+        ]);
+
+        const savedMode = videoResult.trilium_video_processing_mode || 'HYBRID';
+        const savedPrivacy = videoResult.trilium_video_privacy_mode !== false;
+
+        $('input[name="video-mode"][value="' + savedMode + '"]').prop('checked', true);
+        $('#privacy-mode').prop('checked', savedPrivacy);
+
+        // Load debug settings
+        const debugResult = await chrome.storage.sync.get('trilium_debug_config');
+        const debugConfig = debugResult.trilium_debug_config || { enabled: false };
+
+        $('#debug-enabled').prop('checked', debugConfig.enabled);
+    } catch (error) {
+        console.warn('Failed to load settings:', error);
+    }
+}
+
+// Settings form handlers
+async function saveVideoSettings(e) {
+    e.preventDefault();
+
+    try {
+        const selectedMode = $('input[name="video-mode"]:checked').val();
+        const privacyMode = $('#privacy-mode').is(':checked');
+
+        await chrome.storage.sync.set({
+            'trilium_video_processing_mode': selectedMode,
+            'trilium_video_privacy_mode': privacyMode
+        });
+
+        // Show success feedback
+        const button = $(e.target).find('.save-button');
+        const originalText = button.text();
+        button.text('Saved!').css('background', '#27ae60');
+        setTimeout(() => {
+            button.text(originalText).css('background', '');
+        }, 1500);
+    } catch (error) {
+        console.warn('Failed to save video settings:', error);
+    }
+}
+
+async function saveDebugSettings(e) {
+    e.preventDefault();
+
+    try {
+        const debugConfig = {
+            enabled: $('#debug-enabled').is(':checked'),
+            modules: {
+                'content': true,
+                'video-processor': true,
+                'background': true,
+                'toast': true,
+                'readability': true,
+                'images': true,
+                'all': true
+            }
+        };
+
+        await chrome.storage.sync.set({ trilium_debug_config: debugConfig });
+
+        // Show success feedback
+        const button = $(e.target).find('.save-button');
+        const originalText = button.text();
+        button.text('Saved!').css('background', '#27ae60');
+        setTimeout(() => {
+            button.text(originalText).css('background', '');
+        }, 1500);
+    } catch (error) {
+        console.warn('Failed to save debug settings:', error);
+    }
+}
+
+// Event listeners
+$showOptionsButton.on("click", showSettingsView);
+$("#back-to-main").on("click", showMainView);
+$("#video-settings-form").on("submit", saveVideoSettings);
+$("#debug-settings-form").on("submit", saveDebugSettings);
 
 $saveCroppedScreenShotButton.on("click", () => {
     sendMessage({name: 'save-cropped-screenshot'});
@@ -169,56 +271,7 @@ chrome.runtime.onMessage.addListener(request => {
     }
 });
 
-// Video settings handling
-const $videoModeRadios = $('input[name="video-mode"]');
-const $privacyModeCheckbox = $('#privacy-mode');
-const $debugModeCheckbox = $('#debug-mode');
-
-// Load saved video preferences
-async function loadVideoPreferences() {
-    try {
-        const result = await chrome.storage.sync.get([
-            'trilium_video_processing_mode',
-            'trilium_video_privacy_mode',
-            'trilium_video_debug_mode'
-        ]);
-
-        const savedMode = result.trilium_video_processing_mode || 'HYBRID';
-        const savedPrivacy = result.trilium_video_privacy_mode !== false; // Default true
-        const savedDebug = result.trilium_video_debug_mode === true; // Default false
-
-        $videoModeRadios.each(function() {
-            if (this.value === savedMode) {
-                this.checked = true;
-            }
-        });
-
-        $privacyModeCheckbox[0].checked = savedPrivacy;
-        $debugModeCheckbox[0].checked = savedDebug;
-    } catch (error) {
-        console.warn('Failed to load video preferences:', error);
-    }
-}// Save video preferences
-async function saveVideoPreferences() {
-    try {
-        const selectedMode = $videoModeRadios.filter(':checked').val();
-        const privacyMode = $privacyModeCheckbox[0].checked;
-        const debugMode = $debugModeCheckbox[0].checked;
-
-        await chrome.storage.sync.set({
-            'trilium_video_processing_mode': selectedMode,
-            'trilium_video_privacy_mode': privacyMode,
-            'trilium_video_debug_mode': debugMode
-        });
-    } catch (error) {
-        console.warn('Failed to save video preferences:', error);
-    }
-}
-
-// Event listeners for video settings
-$videoModeRadios.on('change', saveVideoPreferences);
-$privacyModeCheckbox.on('change', saveVideoPreferences);
-$debugModeCheckbox.on('change', saveVideoPreferences);
+// Connection handling
 
 const $checkConnectionButton = $("#check-connection-button");
 
@@ -228,7 +281,55 @@ $checkConnectionButton.on("click", () => {
     })
 });
 
+// Theme toggle functionality
+async function loadThemePreference() {
+    try {
+        const result = await chrome.storage.sync.get('trilium_theme_mode');
+        const isDarkMode = result.trilium_theme_mode === 'dark';
+
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            $('.sun-icon').hide();
+            $('.moon-icon').show();
+        } else {
+            document.body.classList.remove('dark-mode');
+            $('.sun-icon').show();
+            $('.moon-icon').hide();
+        }
+    } catch (error) {
+        console.warn('Failed to load theme preference:', error);
+    }
+}
+
+async function toggleTheme() {
+    try {
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const newTheme = isDarkMode ? 'light' : 'dark';
+
+        // Toggle the theme
+        if (newTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            $('.sun-icon').hide();
+            $('.moon-icon').show();
+        } else {
+            document.body.classList.remove('dark-mode');
+            $('.sun-icon').show();
+            $('.moon-icon').hide();
+        }
+
+        // Save the preference
+        await chrome.storage.sync.set({
+            'trilium_theme_mode': newTheme
+        });
+    } catch (error) {
+        console.warn('Failed to toggle theme:', error);
+    }
+}
+
+// Theme toggle event listener
+$("#theme-toggle-button").on("click", toggleTheme);
+
 $(() => {
     chrome.runtime.sendMessage({name: "send-trilium-search-status"});
-    loadVideoPreferences();
+    loadThemePreference();
 });

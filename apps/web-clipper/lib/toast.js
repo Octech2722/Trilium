@@ -263,4 +263,6 @@ Toast.prototype.destroy = function() {
 
 window.showToast = Toast;
 
+console.log('*** TRILIUM TOAST LIBRARY LOADED ***');
+
 "END OF FILE"; // to avoid "result is non-structured-clonable data"

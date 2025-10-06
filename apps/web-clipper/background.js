@@ -2,6 +2,25 @@
 import { randomString } from './utils.js';
 import { triliumServerFacade } from './trilium_server_facade.js';
 
+// Import debug system - will be available as globalThis.TriliumDebug
+import('./lib/debug.js').then(() => {
+    if (globalThis.TriliumDebug) {
+        globalThis.TriliumDebug.background('info', 'Debug system loaded in background script');
+    }
+}).catch(() => {
+    // Fallback if debug system fails to load
+    console.log('Debug system not available, using console fallback');
+});
+
+// Debug helper function
+function debug(level, message, ...args) {
+    if (globalThis.TriliumDebug) {
+        globalThis.TriliumDebug.background(level, message, ...args);
+    } else {
+        console.log(`[BACKGROUND] ${message}`, ...args);
+    }
+}
+
 // Keyboard shortcuts
 chrome.commands.onCommand.addListener(async function (command) {
     if (command == "saveSelection") {
@@ -14,7 +33,7 @@ chrome.commands.onCommand.addListener(async function (command) {
         const activeTab = await getActiveTab();
         await saveCroppedScreenshot(activeTab.url);
     } else {
-        console.log("Unrecognized command", command);
+        debug('warn', 'Unrecognized command:', command);
     }
 });
 
@@ -131,22 +150,39 @@ async function sendMessageToActiveTab(message) {
     }
 
     // In Manifest V3, we need to inject content script if not already present
+    debug('debug', `Attempting to send message to tab ${activeTab.id}`, { message });
     try {
-        return await chrome.tabs.sendMessage(activeTab.id, message);
+        const response = await chrome.tabs.sendMessage(activeTab.id, message);
+        debug('debug', 'Message sent successfully', { responseType: typeof response });
+        if (response && response.videos && response.videos.length > 0) {
+            debug('info', `Found ${response.videos.length} videos in response`);
+            debug('debug', 'First video details:', response.videos[0]);
+        }
+        return response;
     } catch (error) {
+        debug('debug', 'Initial message failed:', error.message);
         // Content script might not be injected, try to inject it
         try {
+            debug('debug', 'Attempting to inject content script');
             await chrome.scripting.executeScript({
                 target: { tabId: activeTab.id },
                 files: ['content.js']
             });
+            debug('info', 'Content script injected successfully');
 
             // Wait a bit for the script to initialize
             await new Promise(resolve => setTimeout(resolve, 200));
 
-            return await chrome.tabs.sendMessage(activeTab.id, message);
+            debug('debug', 'Attempting second message send');
+            const response = await chrome.tabs.sendMessage(activeTab.id, message);
+            debug('debug', 'Second message sent successfully', { responseType: typeof response });
+            if (response && response.videos && response.videos.length > 0) {
+                debug('info', `Found ${response.videos.length} videos in second response`);
+                debug('debug', 'First video details:', response.videos[0]);
+            }
+            return response;
         } catch (injectionError) {
-            console.error('Failed to inject content script:', injectionError);
+            debug('error', 'Failed to inject content script:', injectionError.message);
             throw new Error(`Failed to communicate with page: ${injectionError.message}`);
         }
     }

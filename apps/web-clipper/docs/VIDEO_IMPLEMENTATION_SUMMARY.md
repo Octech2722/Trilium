@@ -8,7 +8,7 @@ I've successfully implemented a comprehensive web video embedding feature for th
 
 ### 🎯 Smart Video Processing
 
-- **Multi-Platform Support**: YouTube, Vimeo, DailyMotion, Twitch, Archive.org, Wikimedia
+- **Multi-Platform Support**: YouTube, Vimeo, DailyMotion, Twitch (with framework for easy expansion)
 - **Intelligent Detection**: Automatically identifies video iframes and links
 - **Flexible Processing**: Four different processing modes to suit various needs
 

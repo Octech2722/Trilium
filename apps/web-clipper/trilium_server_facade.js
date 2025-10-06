@@ -1,5 +1,14 @@
 const PROTOCOL_VERSION_MAJOR = 1;
 
+// Debug helper function
+function debug(level, message, ...args) {
+    if (globalThis.TriliumDebug) {
+        globalThis.TriliumDebug.background(level, message, ...args);
+    } else {
+        console.log(`[SERVER_FACADE] ${message}`, ...args);
+    }
+}
+
 function isDevEnv() {
 	const manifest = chrome.runtime.getManifest();
 
@@ -71,13 +80,13 @@ class TriliumServerFacade {
 		try {
 			const port = await this.getPort();
 
-			console.debug('Trying port ' + port);
+			debug('debug', `Trying port ${port}`);
 
 			const resp = await fetch(`http://127.0.0.1:${port}/api/clipper/handshake`);
 
 			const text = await resp.text();
 
-			console.log("Received response:", text);
+			debug('debug', 'Received handshake response:', text);
 
 			const json = JSON.parse(text);
 
@@ -168,7 +177,8 @@ class TriliumServerFacade {
 			return parseInt(triliumDesktopPort);
 		}
 		else {
-			return isDevEnv() ? 37740 : 37840;
+			// Force to use standard port for now
+			return 37840;
 		}
 	}
 
@@ -205,7 +215,8 @@ class TriliumServerFacade {
 		catch (e) {
 			console.log("Sending request to trilium failed", e);
 
-			toast('Your request failed because we could not contact Trilium instance. Please make sure Trilium is running and is accessible.');
+			// toast('Your request failed because we could not contact Trilium instance. Please make sure Trilium is running and is accessible.');
+			console.error('Could not contact Trilium instance. Please make sure Trilium is running and is accessible.');
 
 			return null;
 		}
